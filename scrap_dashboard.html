@@ -80,11 +80,18 @@
     display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px;
   }
   .filters select{
-    background:var(--surface); border:1px solid var(--border); color:var(--text-0);
+    background:var(--bg-2); border:1px solid var(--border); color:var(--text-0);
     padding:9px 14px; border-radius:10px; font-family:inherit; font-size:13px; font-weight:600;
     cursor:pointer; min-width:130px;
   }
   .filters select:focus{outline:2px solid var(--teal); outline-offset:1px;}
+  .filters select option{
+    background:#0f2438; color:var(--text-0); font-family:'Cairo', sans-serif;
+    padding:8px;
+  }
+  .filters select option:checked, .filters select option:hover{
+    background:var(--teal); color:#0a1628;
+  }
 
   /* ===== KPI cards ===== */
   .kpis{display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin-bottom:18px;}
@@ -181,6 +188,8 @@
     <select id="fProduct"><option value="all">كل الأنواع</option></select>
     <select id="fMachine"><option value="all">كل الماكينات</option></select>
     <select id="fShift"><option value="all">كل الشيفتات</option></select>
+    <select id="fSize"><option value="all">كل المقاسات</option></select>
+    <select id="fColor"><option value="all">كل الألوان</option></select>
   </div>
 
   <div class="kpis">
@@ -281,7 +290,7 @@
    مثال على شكل الرابط:
    https://docs.google.com/spreadsheets/d/e/2PACX-xxxxx/pub?gid=0&single=true&output=csv
    ============================================================ */
-const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTgRwS-i_oZivz0AkhEsq-y2RByhqOcZLeMU9mR21aKp4L8N7T949le33r4iiDnHQ/pub?gid=476195760&single=true&output=csv"; // <-- حط رابط الـ CSV بتاعك هنا
+const SHEET_CSV_URL = null; // <-- حط رابط الـ CSV بتاعك هنا
 const REFRESH_MS = 90000;   // تحديث تلقائي كل 90 ثانية
 
 const MONTHS_AR = {1:'يناير',2:'فبراير',3:'مارس',4:'أبريل',5:'مايو',6:'يونيو',7:'يوليو',8:'أغسطس',9:'سبتمبر',10:'أكتوبر',11:'نوفمبر',12:'ديسمبر'};
@@ -321,9 +330,12 @@ function normalizeRows(rows, fromSheet){
   return rows.map(r=>{
     if(fromSheet){
       return {
-        date: r['date'] || r['Date'] || '',
+        date: parseDate(r['date'] || r['Date'] || ''),
         product_type: r['product type'] || r['product_type'] || '',
         machine: r['machine'] || '',
+        product: r['product'] || '',
+        length: r['Length'] || r['length'] || '',
+        color: r['color'] || r['Color'] || r['اللون'] || '',
         source: r['source of defect'] || r['source'] || '',
         defect_ar: r['defect arabic'] || r['defect_ar'] || '',
         shift: r['shift'] || '',
@@ -332,11 +344,29 @@ function normalizeRows(rows, fromSheet){
       };
     }
     return {
-      date:r.date, product_type:r.product_type, machine:r.machine, source:r.source,
+      date: parseDate(r.date), product_type:r.product_type, machine:r.machine, source:r.source,
+      product:r.product||'', length:r.length||'', color:r.color||'',
       defect_ar:r.defect_ar, shift:r.shift, defect_en:r.defect_en, weight:r.weight||0
     };
   }).filter(r=>r.date);
 }
+
+/* بيتعامل مع صيغ تاريخ مختلفة (ISO, M/D/YYYY, M/D/YY) وبيرجع دايمًا YYYY-MM-DD
+   عشان الترتيب والفلترة بالشهور تبقى صح */
+function parseDate(str){
+  if(!str) return '';
+  str = String(str).trim();
+  let m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m) return `${m[1]}-${pad2(m[2])}-${pad2(m[3])}`;
+  m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(m){
+    let [, mo, da, yr] = m;
+    if(yr.length===2) yr = (parseInt(yr)>50 ? '19' : '20') + yr;
+    return `${yr}-${pad2(mo)}-${pad2(da)}`;
+  }
+  return str;
+}
+function pad2(n){ return String(n).padStart(2,'0'); }
 
 /* ---------- فلاتر ---------- */
 function populateFilters(){
@@ -347,6 +377,8 @@ function populateFilters(){
   fillSelect('fProduct', [...new Set(RAW.map(r=>r.product_type))].filter(Boolean).sort(), v=>v, 'كل الأنواع');
   fillSelect('fMachine', [...new Set(RAW.map(r=>r.machine))].filter(Boolean).sort(), v=>v, 'كل الماكينات');
   fillSelect('fShift', [...new Set(RAW.map(r=>r.shift))].filter(Boolean).sort(), v=>'شيفت '+v, 'كل الشيفتات');
+  fillSelect('fSize', [...new Set(RAW.map(r=>r.product))].filter(Boolean).sort(), v=>v, 'كل المقاسات');
+  fillSelect('fColor', [...new Set(RAW.map(r=>r.color))].filter(Boolean).sort(), v=>v, 'كل الألوان');
 }
 function fillSelect(id, values, labelFn, allLabel){
   const sel = document.getElementById(id);
@@ -355,7 +387,7 @@ function fillSelect(id, values, labelFn, allLabel){
     values.map(v=>`<option value="${v}">${labelFn(v)}</option>`).join('');
   if(values.includes(current)) sel.value = current;
 }
-['fMonth','fProduct','fMachine','fShift'].forEach(id=>{
+['fMonth','fProduct','fMachine','fShift','fSize','fColor'].forEach(id=>{
   document.addEventListener('change', e=>{ if(e.target.id===id) renderAll(); });
 });
 
@@ -364,11 +396,15 @@ function getFiltered(){
   const p = document.getElementById('fProduct').value;
   const mc = document.getElementById('fMachine').value;
   const sh = document.getElementById('fShift').value;
+  const sz = document.getElementById('fSize').value;
+  const cl = document.getElementById('fColor').value;
   return RAW.filter(r=>
     (m==='all' || r.date.slice(0,7)===m) &&
     (p==='all' || r.product_type===p) &&
     (mc==='all' || r.machine===mc) &&
-    (sh==='all' || r.shift===sh)
+    (sh==='all' || r.shift===sh) &&
+    (sz==='all' || r.product===sz) &&
+    (cl==='all' || r.color===cl)
   );
 }
 
