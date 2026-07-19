@@ -451,9 +451,11 @@ function renderPareto(data){
       labels: sorted.map(s=>s[0]),
       datasets:[
         {type:'bar', label:'الوزن (كجم)', data:sorted.map(s=>s[1]), backgroundColor:'#f2a93b', borderRadius:6, yAxisID:'y',
-          datalabels:{display:false}},
+          datalabels:{color:'#ffd27a', textStrokeColor:'#070f1c', textStrokeWidth:3.5, anchor:'end', align:'top', offset:2, clamp:true, clip:false, display:'auto',
+            font:{family:'Cairo', weight:'800', size:10.5}, formatter:v=>fmt(v)}},
         {type:'line', label:'النسبة التراكمية %', data:cumPct, borderColor:'#2dd4bf', backgroundColor:'#2dd4bf', tension:.3, yAxisID:'y1', pointRadius:3,
-          datalabels:{display:false}}
+          datalabels:{color:'#8ff2e6', textStrokeColor:'#070f1c', textStrokeWidth:3.5, align:'bottom', offset:8, clamp:true, clip:false, display:'auto',
+            font:{family:'Cairo', weight:'800', size:9.5}, formatter:v=>v.toFixed(0)+'%'}}
       ]
     },
     options: baseOptions({
@@ -523,9 +525,8 @@ function renderTrend(data){
     data:{
       labels: months.map(m=>{const [y,mo]=m.split('-'); return (MONTHS_AR[parseInt(mo)]||mo);}),
       datasets:[{ data:months.map(m=>grouped[m]), borderColor:'#f2a93b', backgroundColor:'rgba(242,169,59,0.15)', fill:true, tension:.35, pointRadius:4, pointBackgroundColor:'#f2a93b',
-        datalabels:{color:'#0a1628', align:'top', offset:6, clamp:true, clip:false, display:'auto',
-          backgroundColor:'rgba(242,169,59,0.92)', borderRadius:4, padding:{top:2,bottom:2,left:5,right:5},
-          font:{family:'Cairo', weight:'800', size:10.5}, formatter:v=>fmt(v)}
+        datalabels:{color:'#ffd27a', textStrokeColor:'#070f1c', textStrokeWidth:3.5, align:'top', offset:6, clamp:true, clip:false, display:'auto',
+          font:{family:'Cairo', weight:'800', size:11}, formatter:v=>fmt(v)}
       }]
     },
     options: baseOptions({
@@ -546,9 +547,8 @@ function renderShift(data){
   charts.shift = new Chart(byId('shiftChart'), {
     type:'bar',
     data:{ labels:entries.map(e=>'شيفت '+e[0]), datasets:[{data:entries.map(e=>e[1]), backgroundColor:['#5b8def','#9b8cf2'], borderRadius:8, maxBarThickness:60,
-      datalabels:{color:'#0a1628', anchor:'end', align:'top', offset:2, clamp:true, clip:false, display:'auto',
-        backgroundColor:'rgba(234,241,251,0.92)', borderRadius:4, padding:{top:2,bottom:2,left:6,right:6},
-        font:{family:'Cairo', weight:'800', size:12}, formatter:v=>fmt(v)}
+      datalabels:{color:'#eaf1fb', textStrokeColor:'#070f1c', textStrokeWidth:4, anchor:'end', align:'top', offset:4, clamp:true, clip:false, display:'auto',
+        font:{family:'Cairo', weight:'800', size:13}, formatter:v=>fmt(v)}
     }] },
     options: baseOptions({
       plugins:{legend:{display:false}},
@@ -568,7 +568,8 @@ function renderMachine(data){
   charts.machine = new Chart(byId('machineChart'), {
     type:'bar',
     data:{ labels:sorted.map(s=>s[0]), datasets:[{data:sorted.map(s=>s[1]), backgroundColor:'#2dd4bf', borderRadius:6, maxBarThickness:34,
-      datalabels:{display:false}
+      datalabels:{color:'#eaf1fb', textStrokeColor:'#070f1c', textStrokeWidth:3.5, anchor:'end', align:'right', offset:4, clamp:true, clip:false, display:'auto',
+        font:{family:'Cairo', weight:'800', size:11}, formatter:v=>fmt(v)}
     }] },
     options: baseOptions({
       indexAxis:'y',
