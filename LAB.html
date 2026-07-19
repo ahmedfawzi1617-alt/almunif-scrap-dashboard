@@ -307,26 +307,27 @@ async function loadData(manual){
 function normalizeRows(rows, fromSheet){
   return rows.map(r=>{
     if(fromSheet){
+      const g = (...keywordSets) => pickField(r, keywordSets);
       return {
-        date: parseDate(r['Date'] || r['date'] || ''),
-        material: r['Material\nType'] || r['Material Type'] || r['material'] || '',
-        line: r['Line No.'] || r['line'] || '',
-        batch_no: r['Batch No.'] || r['batch_no'] || '',
-        size: r['Product Size'] || r['size'] || '',
-        overall_result: normResult(r['Overall\nResult'] || r['Overall Result'] || r['overall_result']),
-        thickness_min: toNum(r['Thickness\nMin'] || r['Thickness Min'] || r['thickness_min']),
-        thickness_max: toNum(r['Thickness\nMax'] || r['Thickness Max'] || r['thickness_max']),
-        od: toNum(r['OD'] || r['od']),
-        wt_m: toNum(r['Wt./m\n(kg/m)'] || r['wt_m']),
-        mfr: toNum(r['MFR\n(g/10min)'] || r['mfr']),
-        density: toNum(r['Density\n(g/cm³)'] || r['density']),
-        ash: toNum(r['ash'] || r['ASH']),
-        hp_test: r['HP Test\nResult'] || r['hp_test'] || '',
-        impact: r['Impact'] || r['impact'] || '',
-        pp_notes: r['PP: Notes'] || r['pp_notes'] || '',
-        heat_rev: toNum(r['Heat Rev.\n(%)'] || r['heat_rev']),
-        meth_chloride: r['Meth.\nChloride'] || r['meth_chloride'] || '',
-        vicat: toNum(r['Vi-cat\n(°C)'] || r['vicat']),
+        date: parseDate(g(['date'])),
+        material: g(['material']) || '',
+        line: g(['line']) || '',
+        batch_no: g(['batch']) || '',
+        size: g(['product','size'], ['size']) || '',
+        overall_result: normResult(g(['overall','result'], ['result'])),
+        thickness_min: toNum(g(['thickness','min'])),
+        thickness_max: toNum(g(['thickness','max'])),
+        od: toNum(g(['od'])),
+        wt_m: toNum(g(['wt'], ['weight'])),
+        mfr: toNum(g(['mfr'])),
+        density: toNum(g(['density'])),
+        ash: toNum(g(['ash'])),
+        hp_test: g(['hp','test'], ['pressure']) || '',
+        impact: g(['impact']) || '',
+        pp_notes: g(['pp','notes'], ['notes']) || '',
+        heat_rev: toNum(g(['heat','rev'])),
+        meth_chloride: g(['chloride'], ['meth']) || '',
+        vicat: toNum(g(['vicat'], ['vi-cat'], ['vi cat'])),
       };
     }
     return {
@@ -346,6 +347,17 @@ function normResult(v){
   return s || null;
 }
 function toNum(v){ const n = parseFloat(v); return isNaN(n) ? null : n; }
+
+/* بتدور على العمود الصح في صف الشيت حتى لو اسم العمود مختلف شوية
+   (فراغات زيادة، حروف كبيرة/صغيرة، أو صياغة مختلفة شوية) */
+function pickField(row, keywordSets){
+  const entries = Object.entries(row).map(([k,v]) => [k.replace(/\s+/g,' ').trim().toLowerCase(), v]);
+  for(const keywords of keywordSets){
+    const found = entries.find(([k]) => keywords.every(kw => k.includes(kw.toLowerCase())));
+    if(found && found[1] !== undefined && found[1] !== '') return found[1];
+  }
+  return '';
+}
 
 function parseDate(str){
   if(!str) return '';
