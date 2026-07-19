@@ -109,6 +109,12 @@
   }
   .card h3{font-size:14.5px; font-weight:800; margin-bottom:2px;}
   .card .hint{font-size:11.5px; color:var(--text-2); margin-bottom:14px; font-weight:600;}
+  .card.full-bleed{
+    width:100vw; max-width:100vw; position:relative; left:50%; right:50%;
+    margin-left:-50vw; margin-right:-50vw; border-radius:0; box-sizing:border-box;
+  }
+  th.col-date, td.col-date{min-width:100px;}
+  th.col-size, td.col-size{min-width:260px; white-space:normal;}
   .chart-box{position:relative; height:280px;}
   .chart-box.tall{height:320px;}
 
@@ -213,7 +219,7 @@
     <div class="chart-box"><canvas id="materialChart"></canvas></div>
   </div>
 
-  <div class="card">
+  <div class="card full-bleed">
     <h3>كل نتائج الاختبارات وقياسات السمك لكل عينة على حدة</h3>
     <div class="hint">كل اختبار مسجل بكامل تفاصيله — مرتب تنازليًا حسب التاريخ (<span id="tableCount">0</span> اختبار)</div>
     <div style="overflow-x:auto;">
@@ -221,22 +227,14 @@
     <table>
       <thead>
         <tr>
-          <th>التاريخ</th>
+          <th class="col-date">التاريخ</th>
           <th>المادة</th>
           <th>الخط</th>
           <th>الباتش</th>
-          <th>المقاس</th>
+          <th class="col-size">المقاس</th>
           <th>النتيجة</th>
           <th>سمك Min</th>
           <th>سمك Max</th>
-          <th>th.1</th>
-          <th>th.2</th>
-          <th>th.3</th>
-          <th>th.4</th>
-          <th>th.5</th>
-          <th>th.6</th>
-          <th>th.7</th>
-          <th>th.8</th>
           <th>OD</th>
           <th>الأوفاليتي</th>
           <th>الوزن/م</th>
@@ -371,7 +369,7 @@ function populateFilters(){
   fillSelect('fDay', days, v=>'يوم '+v, 'كل الأيام');
   fillSelect('fMaterial', [...new Set(RAW.map(r=>r.material))].filter(Boolean).sort(), v=>v, 'كل المواد');
   fillSelect('fLine', [...new Set(RAW.map(r=>r.line))].filter(Boolean).sort(), v=>v, 'كل الخطوط');
-  fillSelect('fResult', [...new Set(RAW.map(r=>r.overall_result))].filter(Boolean).sort(), v=>v==='pass'?'ناجح':v==='fail'?'راسب':v, 'كل النتائج');
+  fillSelect('fResult', [...new Set(RAW.map(r=>r.overall_result))].filter(Boolean).sort(), v=>v==='pass'?'PASS':v==='fail'?'FAIL':v, 'كل النتائج');
 }
 function fillSelect(id, values, labelFn, allLabel){
   const sel = document.getElementById(id);
@@ -431,7 +429,7 @@ function renderResult(data){
   destroyChart('result');
   charts.result = new Chart(byId('resultChart'), {
     type:'doughnut',
-    data:{ labels:['ناجح','راسب'], datasets:[{data:[pass, fail], backgroundColor:['#3ddc84','#f2678b'], borderWidth:0,
+    data:{ labels:['PASS','FAIL'], datasets:[{data:[pass, fail], backgroundColor:['#3ddc84','#f2678b'], borderWidth:0,
       datalabels:{color:'#0a1628', font:{family:'Cairo', weight:'800', size:13}, formatter:(v,ctx)=>{
         const total = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
         return total && v ? (v/total*100).toFixed(0)+'%' : '';
@@ -505,22 +503,14 @@ function renderTable(data){
   const nz = v => (v===null || v===undefined || v==='') ? '—' : v;
   document.getElementById('testTableBody').innerHTML = sorted.map(d=>`
     <tr>
-      <td>${d.date}</td>
+      <td class="col-date">${d.date}</td>
       <td><span class="badge ${badgeClass(d.material)}">${d.material||'—'}</span></td>
       <td>${nz(d.line)}</td>
       <td>${nz(d.batch_no)}</td>
-      <td>${nz(d.size)}</td>
-      <td><span class="badge ${d.overall_result==='pass'?'pass':d.overall_result==='fail'?'fail':''}">${d.overall_result==='pass'?'ناجح':d.overall_result==='fail'?'راسب':(d.overall_result||'—')}</span></td>
+      <td class="col-size">${nz(d.size)}</td>
+      <td><span class="badge ${d.overall_result==='pass'?'pass':d.overall_result==='fail'?'fail':''}">${d.overall_result==='pass'?'PASS':d.overall_result==='fail'?'FAIL':(d.overall_result||'—')}</span></td>
       <td>${nz(d.thickness_min)}</td>
       <td>${nz(d.thickness_max)}</td>
-      <td>${nz(d.th1)}</td>
-      <td>${nz(d.th2)}</td>
-      <td>${nz(d.th3)}</td>
-      <td>${nz(d.th4)}</td>
-      <td>${nz(d.th5)}</td>
-      <td>${nz(d.th6)}</td>
-      <td>${nz(d.th7)}</td>
-      <td>${nz(d.th8)}</td>
       <td>${nz(d.od)}</td>
       <td>${nz(d.ovality)}</td>
       <td>${nz(d.wt_m)}</td>
