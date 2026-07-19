@@ -452,12 +452,17 @@ function renderPareto(data){
       labels: sorted.map(s=>s[0]),
       datasets:[
         {type:'bar', label:'الوزن (كجم)', data:sorted.map(s=>s[1]), backgroundColor:'#f2a93b', borderRadius:6, yAxisID:'y',
-          datalabels:{color:'#eaf1fb', anchor:'end', align:'top', font:{family:'Cairo', weight:'700', size:10.5}, formatter:v=>fmt(v)}},
+          datalabels:{color:'#0a1628', anchor:'end', align:'top', offset:2, clamp:true, clip:false,
+            backgroundColor:'rgba(242,169,59,0.92)', borderRadius:4, padding:{top:2,bottom:2,left:5,right:5},
+            font:{family:'Cairo', weight:'800', size:10.5}, formatter:v=>fmt(v)}},
         {type:'line', label:'النسبة التراكمية %', data:cumPct, borderColor:'#2dd4bf', backgroundColor:'#2dd4bf', tension:.3, yAxisID:'y1', pointRadius:3,
-          datalabels:{color:'#2dd4bf', align:'top', offset:8, font:{family:'Cairo', weight:'700', size:10}, formatter:v=>v.toFixed(0)+'%'}}
+          datalabels:{color:'#0a1628', align:'bottom', offset:10, clamp:true, clip:false,
+            backgroundColor:'rgba(45,212,191,0.92)', borderRadius:4, padding:{top:2,bottom:2,left:5,right:5},
+            font:{family:'Cairo', weight:'800', size:9.5}, formatter:v=>v.toFixed(0)+'%'}}
       ]
     },
     options: baseOptions({
+      layout:{padding:{top:24}},
       scales:{
         x:{ticks:{color:'#aebdd4', font:{family:'Cairo', size:11}}, grid:{display:false}},
         y:{position:'left', ticks:{color:'#aebdd4'}, grid:{color:'rgba(255,255,255,0.05)'}},
@@ -523,11 +528,14 @@ function renderTrend(data){
     data:{
       labels: months.map(m=>{const [y,mo]=m.split('-'); return (MONTHS_AR[parseInt(mo)]||mo);}),
       datasets:[{ data:months.map(m=>grouped[m]), borderColor:'#f2a93b', backgroundColor:'rgba(242,169,59,0.15)', fill:true, tension:.35, pointRadius:4, pointBackgroundColor:'#f2a93b',
-        datalabels:{color:'#eaf1fb', align:'top', offset:6, font:{family:'Cairo', weight:'700', size:10.5}, formatter:v=>fmt(v)}
+        datalabels:{color:'#0a1628', align:'top', offset:6, clamp:true, clip:false,
+          backgroundColor:'rgba(242,169,59,0.92)', borderRadius:4, padding:{top:2,bottom:2,left:5,right:5},
+          font:{family:'Cairo', weight:'800', size:10.5}, formatter:v=>fmt(v)}
       }]
     },
     options: baseOptions({
       plugins:{legend:{display:false}},
+      layout:{padding:{top:22}},
       scales:{
         x:{ticks:{color:'#aebdd4', font:{family:'Cairo'}}, grid:{display:false}},
         y:{ticks:{color:'#aebdd4'}, grid:{color:'rgba(255,255,255,0.05)'}}
@@ -543,10 +551,13 @@ function renderShift(data){
   charts.shift = new Chart(byId('shiftChart'), {
     type:'bar',
     data:{ labels:entries.map(e=>'شيفت '+e[0]), datasets:[{data:entries.map(e=>e[1]), backgroundColor:['#5b8def','#9b8cf2'], borderRadius:8, maxBarThickness:60,
-      datalabels:{color:'#eaf1fb', anchor:'end', align:'top', font:{family:'Cairo', weight:'700', size:12}, formatter:v=>fmt(v)}
+      datalabels:{color:'#0a1628', anchor:'end', align:'top', offset:2, clamp:true, clip:false,
+        backgroundColor:'rgba(234,241,251,0.92)', borderRadius:4, padding:{top:2,bottom:2,left:6,right:6},
+        font:{family:'Cairo', weight:'800', size:12}, formatter:v=>fmt(v)}
     }] },
     options: baseOptions({
       plugins:{legend:{display:false}},
+      layout:{padding:{top:22}},
       scales:{
         x:{ticks:{color:'#aebdd4', font:{family:'Cairo'}}, grid:{display:false}},
         y:{ticks:{color:'#aebdd4'}, grid:{color:'rgba(255,255,255,0.05)'}}
@@ -562,11 +573,14 @@ function renderMachine(data){
   charts.machine = new Chart(byId('machineChart'), {
     type:'bar',
     data:{ labels:sorted.map(s=>s[0]), datasets:[{data:sorted.map(s=>s[1]), backgroundColor:'#2dd4bf', borderRadius:6, maxBarThickness:34,
-      datalabels:{color:'#eaf1fb', anchor:'end', align:'right', font:{family:'Cairo', weight:'700', size:11}, formatter:v=>fmt(v)}
+      datalabels:{color:'#0a1628', anchor:'end', align:'right', offset:2, clamp:true, clip:false,
+        backgroundColor:'rgba(234,241,251,0.92)', borderRadius:4, padding:{top:2,bottom:2,left:6,right:6},
+        font:{family:'Cairo', weight:'800', size:11}, formatter:v=>fmt(v)}
     }] },
     options: baseOptions({
       indexAxis:'y',
       plugins:{legend:{display:false}},
+      layout:{padding:{right:36}},
       scales:{
         x:{ticks:{color:'#aebdd4'}, grid:{color:'rgba(255,255,255,0.05)'}},
         y:{ticks:{color:'#aebdd4', font:{family:'Cairo', size:11.5}}, grid:{display:false}}
