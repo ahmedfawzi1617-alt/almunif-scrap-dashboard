@@ -451,13 +451,9 @@ function renderPareto(data){
       labels: sorted.map(s=>s[0]),
       datasets:[
         {type:'bar', label:'الوزن (كجم)', data:sorted.map(s=>s[1]), backgroundColor:'#f2a93b', borderRadius:6, yAxisID:'y',
-          datalabels:{color:'#0a1628', anchor:'end', align:'top', offset:2, clamp:true, clip:false, display:'auto',
-            backgroundColor:'rgba(242,169,59,0.92)', borderRadius:4, padding:{top:2,bottom:2,left:4,right:4},
-            font:{family:'Cairo', weight:'800', size:9.5}, formatter:v=>fmt(v)}},
+          datalabels:{display:false}},
         {type:'line', label:'النسبة التراكمية %', data:cumPct, borderColor:'#2dd4bf', backgroundColor:'#2dd4bf', tension:.3, yAxisID:'y1', pointRadius:3,
-          datalabels:{color:'#0a1628', align:'bottom', offset:10, clamp:true, clip:false, display:'auto',
-            backgroundColor:'rgba(45,212,191,0.92)', borderRadius:4, padding:{top:2,bottom:2,left:4,right:4},
-            font:{family:'Cairo', weight:'800', size:9}, formatter:v=>v.toFixed(0)+'%'}}
+          datalabels:{display:false}}
       ]
     },
     options: baseOptions({
@@ -572,9 +568,7 @@ function renderMachine(data){
   charts.machine = new Chart(byId('machineChart'), {
     type:'bar',
     data:{ labels:sorted.map(s=>s[0]), datasets:[{data:sorted.map(s=>s[1]), backgroundColor:'#2dd4bf', borderRadius:6, maxBarThickness:34,
-      datalabels:{color:'#0a1628', anchor:'end', align:'right', offset:2, clamp:true, clip:false, display:'auto',
-        backgroundColor:'rgba(234,241,251,0.92)', borderRadius:4, padding:{top:2,bottom:2,left:6,right:6},
-        font:{family:'Cairo', weight:'800', size:11}, formatter:v=>fmt(v)}
+      datalabels:{display:false}
     }] },
     options: baseOptions({
       indexAxis:'y',
