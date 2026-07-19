@@ -265,7 +265,6 @@
         <tr>
           <th>السبب</th>
           <th>النوع</th>
-          <th>مصدر العيب</th>
           <th>عدد الحالات</th>
           <th>الوزن (كجم)</th>
         </tr>
@@ -604,7 +603,6 @@ function renderTable(data){
     <tr>
       <td>${d.name}</td>
       <td><span class="badge ${isPE(d.product)?'pe':'pvc'}">${d.product||'—'}</span></td>
-      <td>${d.source==='initial' ? 'بداية تشغيل' : d.source==='process' ? 'أثناء التشغيل' : (d.source||'—')}</td>
       <td>${d.count}</td>
       <td>
         <div class="bar-cell">
