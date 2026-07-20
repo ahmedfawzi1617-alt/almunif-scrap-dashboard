@@ -9,6 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js"></script>
 <style>
   :root{
     --bg-0:#070f1c;
@@ -82,6 +83,13 @@
   .filters select:focus{outline:2px solid var(--teal); outline-offset:1px;}
   .filters select option{background:#0f2438; color:var(--text-0); font-family:'Cairo', sans-serif; padding:8px;}
   .filters select option:checked, .filters select option:hover{background:var(--teal); color:#0a1628;}
+  .search-box{
+    background:var(--bg-2); border:1px solid var(--border); color:var(--text-0);
+    padding:9px 14px; border-radius:10px; font-family:inherit; font-size:13px; font-weight:600;
+    min-width:220px;
+  }
+  .search-box::placeholder{color:var(--text-2);}
+  .search-box:focus{outline:2px solid var(--teal); outline-offset:1px;}
 
   .kpis{display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin-bottom:18px;}
   .kpi{
@@ -172,6 +180,7 @@
   </div>
 
   <div class="filters">
+    <input type="text" id="fSizeSearch" placeholder="🔍 بحث بمقاس معيّن..." class="search-box">
     <select id="fYear"><option value="all">كل السنين</option></select>
     <select id="fMonth"><option value="all">كل الشهور</option></select>
     <select id="fDay"><option value="all">كل الأيام</option></select>
@@ -223,8 +232,16 @@
   </div>
 
   <div class="card full-bleed">
-    <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>كل نتائج الاختبارات وقياسات السمك لكل عينة على حدة</h3>
-    <div class="hint">كل اختبار مسجل بكامل تفاصيله — مرتب تنازليًا حسب التاريخ (<span id="tableCount">0</span> اختبار)</div>
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+      <div>
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>كل نتائج الاختبارات وقياسات السمك لكل عينة على حدة</h3>
+        <div class="hint">كل اختبار مسجل بكامل تفاصيله — مرتب تنازليًا حسب التاريخ (<span id="tableCount">0</span> اختبار)</div>
+      </div>
+      <button class="refresh-btn" id="exportBtn" onclick="exportWordReport()" style="display:flex; align-items:center; gap:7px; white-space:nowrap;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+        تصدير تقرير Word
+      </button>
+    </div>
     <div style="overflow-x:auto;">
     <div style="max-height:640px; overflow-y:auto;">
     <table>
@@ -398,6 +415,11 @@ function fillSelect(id, values, labelFn, allLabel){
 ['fYear','fMonth','fDay','fMaterial','fLine','fResult'].forEach(id=>{
   document.addEventListener('change', e=>{ if(e.target.id===id) renderAll(); });
 });
+let searchDebounce;
+document.getElementById('fSizeSearch').addEventListener('input', ()=>{
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(renderAll, 200);
+});
 
 function getFiltered(){
   const yr = document.getElementById('fYear').value;
@@ -406,13 +428,15 @@ function getFiltered(){
   const mat = document.getElementById('fMaterial').value;
   const ln = document.getElementById('fLine').value;
   const rs = document.getElementById('fResult').value;
+  const sq = document.getElementById('fSizeSearch').value.trim().toLowerCase();
   return RAW.filter(r=>
     (yr==='all' || r.date.slice(0,4)===yr) &&
     (m==='all' || r.date.slice(0,7)===m) &&
     (dy==='all' || String(parseInt(r.date.slice(8,10)))===dy) &&
     (mat==='all' || r.material===mat) &&
     (ln==='all' || r.line===ln) &&
-    (rs==='all' || r.overall_result===rs)
+    (rs==='all' || r.overall_result===rs) &&
+    (sq==='' || (r.size||'').toLowerCase().includes(sq))
   );
 }
 
@@ -554,6 +578,158 @@ function baseOptions(extra){
       tooltip:{rtl:true, titleFont:{family:'Cairo'}, bodyFont:{family:'Cairo'}, backgroundColor:'#0f2438', borderColor:'rgba(255,255,255,0.1)', borderWidth:1}
     }
   }, extra);
+}
+
+/* ============================================================
+   تصدير تقرير Word — بيولّد ملف .docx من البيانات المفلترة حاليًا
+   ============================================================ */
+async function exportWordReport(){
+  const btn = document.getElementById('exportBtn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = 'جاري التجهيز...';
+  btn.disabled = true;
+  try{
+    const data = [...getFiltered()].sort((a,b)=>a.date.localeCompare(b.date));
+    if(!data.length){ alert('مفيش اختبارات مطابقة للفلتر الحالي عشان نصدّرها.'); return; }
+
+    const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+            WidthType, AlignmentType, BorderStyle, ShadingType, HeadingLevel } = docx;
+
+    const TABLE_WIDTH = 9000;
+    const now = new Date();
+    const genDate = now.toLocaleDateString('ar-EG') + ' — ' + now.toLocaleTimeString('ar-EG');
+    const reportNo = 'QC-EXP-' + now.getFullYear() + pad2(now.getMonth()+1) + pad2(now.getDate()) + pad2(now.getHours()) + pad2(now.getMinutes());
+
+    const periodLabel = (()=>{
+      const yr = document.getElementById('fYear').value;
+      const m = document.getElementById('fMonth').value;
+      const dy = document.getElementById('fDay').value;
+      if(m!=='all'){ const [y,mo]=m.split('-'); return (MONTHS_AR[parseInt(mo)]||mo) + ' ' + y + (dy!=='all' ? ' — يوم '+dy : ''); }
+      if(yr!=='all') return 'سنة ' + yr;
+      return 'كل الفترة المتاحة';
+    })();
+
+    const pass = data.filter(r=>r.overall_result==='pass').length;
+    const fail = data.filter(r=>r.overall_result==='fail').length;
+    const passRate = ((pass/data.length)*100).toFixed(1) + '%';
+
+    const P = (text, opts={}) => new Paragraph(Object.assign({
+      bidirectional:true, alignment: AlignmentType.RIGHT,
+      children:[ new TextRun(Object.assign({ text, font:'Arial', rightToLeft:true }, opts.run||{})) ]
+    }, opts.para||{}));
+
+    const borders = { top:{style:BorderStyle.SINGLE,size:2,color:'999999'}, bottom:{style:BorderStyle.SINGLE,size:2,color:'999999'},
+      left:{style:BorderStyle.SINGLE,size:2,color:'999999'}, right:{style:BorderStyle.SINGLE,size:2,color:'999999'} };
+
+    const cell = (text, {width, header=false, shade=null, bold=false} = {}) => new TableCell({
+      width:{size:width, type:WidthType.DXA}, borders,
+      shading: shade ? {type:ShadingType.CLEAR, fill:shade} : undefined,
+      children:[ P(text==null || text==='' ? '—' : String(text), { run:{ bold: header||bold, size: 19 } }) ]
+    });
+
+    function infoTable(pairs, colWidth){ // pairs: [[label,value],...] two per row
+      const rows = [];
+      for(let i=0;i<pairs.length;i+=2){
+        const a = pairs[i], b = pairs[i+1];
+        rows.push(new TableRow({ children:[
+          cell(a[0], {width:colWidth*0.28, header:true, shade:'F2F2F2'}),
+          cell(a[1], {width:colWidth*0.22}),
+          b ? cell(b[0], {width:colWidth*0.28, header:true, shade:'F2F2F2'}) : cell('', {width:colWidth*0.28, shade:'F2F2F2'}),
+          b ? cell(b[1], {width:colWidth*0.22}) : cell('', {width:colWidth*0.22}),
+        ]}));
+      }
+      return new Table({ width:{size:TABLE_WIDTH, type:WidthType.DXA}, columnWidths:[colWidth*0.28,colWidth*0.22,colWidth*0.28,colWidth*0.22], rows });
+    }
+
+    function dataTable(headers, widths, rowsData){
+      const headerRow = new TableRow({ children: headers.map((h,i)=>cell(h,{width:widths[i], header:true, shade:'D9DEEC'})) });
+      const bodyRows = rowsData.map(rd => new TableRow({ children: rd.map((v,i)=>cell(v,{width:widths[i]})) }));
+      return new Table({ width:{size:TABLE_WIDTH, type:WidthType.DXA}, columnWidths:widths, rows:[headerRow, ...bodyRows] });
+    }
+
+    const children = [];
+
+    // ===== الترويسة =====
+    children.push(P('شركة المنيف للأنابيب', { run:{ bold:true, size:32 }, para:{ alignment:AlignmentType.CENTER } }));
+    children.push(P('إدارة الجودة — معمل اختبارات المواسير', { run:{ italics:true, size:20, color:'555555' }, para:{ alignment:AlignmentType.CENTER } }));
+    children.push(new Paragraph({ text:'', border:{ bottom:{ style:BorderStyle.SINGLE, size:6, color:'2C3E6B', space:6 } } }));
+    children.push(P('تقرير نتائج الاختبارات المعملية', { run:{ bold:true, size:28 }, para:{ alignment:AlignmentType.CENTER, spacing:{before:200,after:200} } }));
+
+    // ===== جدول المعلومات =====
+    children.push(infoTable([
+      ['رقم التقرير', reportNo], ['تاريخ الإصدار', genDate],
+      ['الفترة المشمولة', periodLabel], ['عدد العينات', String(data.length)],
+      ['نسبة النجاح', passRate], ['عدد حالات الفشل', String(fail)],
+    ], TABLE_WIDTH));
+    children.push(P('', { para:{ spacing:{after:200} } }));
+
+    // ===== أولاً: ملخص النتائج =====
+    children.push(P('أولاً: ملخص النتائج', { run:{ bold:true, size:24 }, para:{ spacing:{before:150, after:120}, heading:HeadingLevel.HEADING_1 } }));
+    const summaryWidths = [1100,1600,1300,1400,2400,1200];
+    children.push(dataTable(
+      ['#','التاريخ','المادة','الخط','المقاس','النتيجة'],
+      summaryWidths,
+      data.map((d,i)=>[String(i+1), d.date, d.material||'—', d.line||'—', d.size||'—', d.overall_result==='pass'?'PASS':d.overall_result==='fail'?'FAIL':'—'])
+    ));
+    children.push(P('', { para:{ spacing:{after:250} } }));
+
+    // ===== ثانياً: تفاصيل كل عينة =====
+    children.push(P('ثانياً: تفاصيل كل عينة على حدة', { run:{ bold:true, size:24 }, para:{ spacing:{before:150, after:150}, heading:HeadingLevel.HEADING_1 } }));
+
+    data.forEach((d,i)=>{
+      const resultText = d.overall_result==='pass' ? 'PASS' : d.overall_result==='fail' ? 'FAIL' : '—';
+      children.push(P(`العينة رقم ${i+1} — النتيجة: ${resultText} — الباتش: ${d.batch_no||'—'}`, {
+        run:{ bold:true, size:21, color: d.overall_result==='fail' ? 'C0392B' : '1E7A46' },
+        para:{ spacing:{before:220, after:100} }
+      }));
+
+      children.push(infoTable([
+        ['التاريخ', d.date], ['المادة', d.material||'—'],
+        ['الخط', d.line||'—'], ['المقاس', d.size||'—'],
+        ['سمك Min (mm)', d.thickness_min ?? '—'], ['سمك Max (mm)', d.thickness_max ?? '—'],
+        ['OD', d.od ?? '—'], ['الوزن/م', d.wt_m ?? '—'],
+      ], TABLE_WIDTH));
+      children.push(P('', { para:{ spacing:{after:100} } }));
+
+      children.push(dataTable(
+        ['MFR','ASH','الضغط','تراجع حراري','الكثافة','كلوريد الميثيل','Vi-cat','الصدمة'],
+        [1000,900,1200,1200,1000,1500,900,1300],
+        [[ d.mfr ?? '—', d.ash ?? '—', d.hp_test||'—', d.heat_rev ?? '—', d.density ?? '—', d.meth_chloride||'—', d.vicat ?? '—', d.impact||'—' ]]
+      ));
+
+      if(d.pp_notes){
+        children.push(P('ملاحظات: ' + d.pp_notes, { run:{ italics:true, size:19, color:'8A5A00' }, para:{ spacing:{before:100, after:100} } }));
+      }
+      children.push(new Paragraph({ text:'', border:{ bottom:{ style:BorderStyle.SINGLE, size:2, color:'CCCCCC', space:4 } }, spacing:{after:150} }));
+    });
+
+    children.push(P('تم إنشاء هذا التقرير تلقائيًا من لوحة تحليل الاختبارات المعملية — المنيف للأنابيب', {
+      run:{ size:16, color:'888888', italics:true }, para:{ alignment:AlignmentType.CENTER, spacing:{before:300} }
+    }));
+
+    const doc = new Document({
+      sections:[{
+        properties:{ page:{ margin:{ top:900, bottom:900, left:700, right:700 } } },
+        children
+      }]
+    });
+
+    const blob = await Packer.toBlob(doc);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'تقرير_الاختبارات_المعملية_' + now.toISOString().slice(0,10) + '.docx';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 5000);
+  }catch(err){
+    console.error('فشل توليد التقرير:', err);
+    alert('حصل خطأ أثناء توليد التقرير. جرب تاني أو قلل عدد الاختبارات بالفلترة.');
+  }finally{
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
 }
 
 loadData(false);
