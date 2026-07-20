@@ -626,10 +626,10 @@ function exportReport(){
         <tr><th>OD</th><td>${esc(d.od)}</td><th>الوزن/م</th><td>${esc(d.wt_m)}</td></tr>
       </table>
       <table class="prop-table">
-        <tr><th>MFR</th><th>ASH</th><th>الضغط</th><th>تراجع حراري</th><th>الكثافة</th><th>كلوريد الميثيل</th><th>Vi-cat</th><th>الصدمة</th></tr>
+        <tr><th>MFR</th><th>ASH</th><th>Pressure</th><th>Heat-reversion</th><th>Density</th><th>Methylene chloride</th><th>Vi-cat</th><th>Impact</th></tr>
         <tr><td>${esc(d.mfr)}</td><td>${esc(d.ash)}</td><td>${esc(d.hp_test)}</td><td>${esc(d.heat_rev)}</td><td>${esc(d.density)}</td><td>${esc(d.meth_chloride)}</td><td>${esc(d.vicat)}</td><td>${esc(d.impact)}</td></tr>
       </table>
-      ${d.pp_notes ? `<p class="notes">ملاحظات: ${esc(d.pp_notes)}</p>` : ''}
+      ${d.pp_notes ? `<p class="notes">Notes: ${esc(d.pp_notes)}</p>` : ''}
     </div>`;
   }).join('');
 
@@ -690,13 +690,13 @@ function exportReport(){
 
   <table class="info-header-table">
     <tr><th>رقم التقرير</th><td>${reportNo}</td><th>تاريخ الإصدار</th><td>${genDate}</td></tr>
-    <tr><th>الفترة المشمولة</th><td>${periodLabel}</td><th>عدد العينات</th><td>${data.length}</td></tr>
+    <tr><th>الفترة</th><td>${periodLabel}</td><th>عدد العينات</th><td>${data.length}</td></tr>
     <tr><th>نسبة النجاح</th><td>${passRate}</td><th>عدد حالات الفشل</th><td>${fail}</td></tr>
   </table>
 
   <h3 class="section-title">أولاً: ملخص النتائج</h3>
   <table class="summary-table">
-    <thead><tr><th>#</th><th>التاريخ</th><th>المادة</th><th>الخط</th><th>المقاس</th><th>النتيجة</th></tr></thead>
+    <thead><tr><th>#</th><th>Date</th><th>Material</th><th>Line</th><th>Size</th><th>Result</th></tr></thead>
     <tbody>${summaryRows}</tbody>
   </table>
 
