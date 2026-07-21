@@ -726,13 +726,13 @@ function exportReport(){
 
   <table class="info-header-table">
     <tr><th>رقم التقرير</th><td>${reportNo}</td><th>تاريخ الإصدار</th><td>${genDate}</td></tr>
-    <tr><th>الفترة المشمولة</th><td>${periodLabel}</td><th>عدد العينات</th><td>${data.length}</td></tr>
+    <tr><th>الفترة المحددة</th><td>${periodLabel}</td><th>عدد العينات</th><td>${data.length}</td></tr>
     <tr><th>نسبة النجاح</th><td>${passRate}</td><th>عدد حالات الفشل</th><td>${fail}</td></tr>
   </table>
 
   <h3 class="section-title">أولاً: ملخص النتائج</h3>
   <table class="summary-table">
-    <thead><tr><th>#</th><th>التاريخ</th><th>المادة</th><th>الخط</th><th>Order NO</th><th>المقاس</th><th>النتيجة</th></tr></thead>
+    <thead><tr><th>NO</th><th>Date</th><th>Material</th><th>Line</th><th>Order NO</th><th>Size</th><th>Result</th></tr></thead>
     <tbody>${summaryRows}</tbody>
   </table>
 
