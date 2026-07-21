@@ -179,13 +179,13 @@
   </div>
 
   <div class="filters">
-    <input type="text" id="fSizeSearch" placeholder="🔍 بحث بمقاس معيّن..." class="search-box">
-    <select id="fYear"><option value="all">كل السنين</option></select>
-    <select id="fMonth"><option value="all">كل الشهور</option></select>
-    <select id="fDay"><option value="all">كل الأيام</option></select>
-    <select id="fMaterial"><option value="all">كل المواد</option></select>
-    <select id="fLine"><option value="all">كل الخطوط</option></select>
-    <select id="fResult"><option value="all">كل النتائج</option></select>
+    <input type="text" id="fSizeSearch" placeholder="🔍 Search ..." class="search-box">
+    <select id="fYear"><option value="all">Years</option></select>
+    <select id="fMonth"><option value="all">Months</option></select>
+    <select id="fDay"><option value="all">Days</option></select>
+    <select id="fMaterial"><option value="all">Materials</option></select>
+    <select id="fLine"><option value="all">Lines </option></select>
+    <select id="fResult"><option value="all">Results</option></select>
   </div>
 
   <div class="kpis">
@@ -246,26 +246,26 @@
     <table>
       <thead>
         <tr>
-          <th class="col-date">التاريخ</th>
-          <th>المادة</th>
-          <th>الخط</th>
-          <th>الباتش</th>
+          <th class="col-date">Date</th>
+          <th>Material</th>
+          <th>Line</th>
+          <th>Material B.N</th>
           <th>Order NO</th>
-          <th class="col-size">المقاس</th>
+          <th class="col-size">Size</th>
           <th>النتيجة</th>
-          <th>سمك Min</th>
-          <th>سمك Max</th>
+          <th>Th Min</th>
+          <th>Th Max</th>
           <th>OD</th>
-          <th>الوزن/م</th>
+          <th>Weight/m</th>
           <th>MFR</th>
           <th>ASH</th>
-          <th>الضغط</th>
-          <th>تراجع حراري</th>
-          <th>الكثافة</th>
-          <th>كلوريد الميثيل</th>
+          <th>Pressure</th>
+          <th>Heat Reversion</th>
+          <th>Density</th>
+          <th>Methylene chloride</th>
           <th>Vi-cat</th>
-          <th>الصدمة</th>
-          <th class="col-notes">الملاحظات (PP)</th>
+          <th>Impact</th>
+          <th class="col-notes">Notes (PP)</th>
         </tr>
       </thead>
       <tbody id="testTableBody"></tbody>
@@ -402,22 +402,22 @@ function populateFilters(){
   const scopedFor = (excludeKey) => RAW.filter(r=>matchesFilters(r, f, excludeKey));
 
   const yearScope = scopedFor('yr');
-  fillSelect('fYear', [...new Set(yearScope.map(r=>r.date.slice(0,4)))].sort(), v=>v, 'كل السنين');
+  fillSelect('fYear', [...new Set(yearScope.map(r=>r.date.slice(0,4)))].sort(), v=>v, 'Years');
 
   const monthScope = scopedFor('m');
-  fillSelect('fMonth', [...new Set(monthScope.map(r=>r.date.slice(0,7)))].sort(), m=>{ const [y,mo]=m.split('-'); return (MONTHS_AR[parseInt(mo)]||mo) + ' ' + y; }, 'كل الشهور');
+  fillSelect('fMonth', [...new Set(monthScope.map(r=>r.date.slice(0,7)))].sort(), m=>{ const [y,mo]=m.split('-'); return (MONTHS_AR[parseInt(mo)]||mo) + ' ' + y; }, 'Months');
 
   const dayScope = scopedFor('dy');
-  fillSelect('fDay', [...new Set(dayScope.map(r=>parseInt(r.date.slice(8,10))))].filter(d=>!isNaN(d)).sort((a,b)=>a-b), v=>'يوم '+v, 'كل الأيام');
+  fillSelect('fDay', [...new Set(dayScope.map(r=>parseInt(r.date.slice(8,10))))].filter(d=>!isNaN(d)).sort((a,b)=>a-b), v=>'يوم '+v, 'Days');
 
   const matScope = scopedFor('mat');
-  fillSelect('fMaterial', [...new Set(matScope.map(r=>r.material))].filter(Boolean).sort(), v=>v, 'كل المواد');
+  fillSelect('fMaterial', [...new Set(matScope.map(r=>r.material))].filter(Boolean).sort(), v=>v, 'Materials');
 
   const lineScope = scopedFor('ln');
-  fillSelect('fLine', [...new Set(lineScope.map(r=>r.line))].filter(Boolean).sort(), v=>v, 'كل الخطوط');
+  fillSelect('fLine', [...new Set(lineScope.map(r=>r.line))].filter(Boolean).sort(), v=>v, 'Lines');
 
   const resultScope = scopedFor('rs');
-  fillSelect('fResult', [...new Set(resultScope.map(r=>r.overall_result))].filter(Boolean).sort(), v=>v==='pass'?'PASS':v==='fail'?'FAIL':v, 'كل النتائج');
+  fillSelect('fResult', [...new Set(resultScope.map(r=>r.overall_result))].filter(Boolean).sort(), v=>v==='pass'?'PASS':v==='fail'?'FAIL':v, 'Results');
 }
 function fillSelect(id, values, labelFn, allLabel){
   const sel = document.getElementById(id);
@@ -653,19 +653,19 @@ function exportReport(){
     const resultText = d.overall_result==='pass' ? 'PASS' : d.overall_result==='fail' ? 'FAIL' : '—';
     return `
     <div class="sample-block">
-      <h3 class="${d.overall_result==='fail'?'fail-title':'pass-title'}">العينة رقم ${i+1} — النتيجة: ${resultText} — الباتش: ${esc(d.batch_no)}</h3>
+      <h3 class="${d.overall_result==='fail'?'fail-title':'pass-title'}">Sample NO  ${i+1} — Result: ${resultText} — Batch NO: ${esc(d.batch_no)}</h3>
       <table class="info-table">
-        <tr><th>التاريخ</th><td>${esc(d.date)}</td><th>المادة</th><td>${esc(d.material)}</td></tr>
-        <tr><th>الخط</th><td>${esc(d.line)}</td><th>Order NO</th><td>${esc(d.order_no)}</td></tr>
-        <tr><th>المقاس</th><td class="ltr-cell" colspan="3">${esc(d.size)}</td></tr>
-        <tr><th>سمك Min (mm)</th><td>${esc(d.thickness_min)}</td><th>سمك Max (mm)</th><td>${esc(d.thickness_max)}</td></tr>
-        <tr><th>OD</th><td>${esc(d.od)}</td><th>الوزن/م</th><td>${esc(d.wt_m)}</td></tr>
+        <tr><th>Date</th><td>${esc(d.date)}</td><th>Material</th><td>${esc(d.material)}</td></tr>
+        <tr><th>Line</th><td>${esc(d.line)}</td><th>Order NO</th><td>${esc(d.order_no)}</td></tr>
+        <tr><th>Size</th><td class="ltr-cell" colspan="3">${esc(d.size)}</td></tr>
+        <tr><th>Th Min (mm)</th><td>${esc(d.thickness_min)}</td><th>Th Max (mm)</th><td>${esc(d.thickness_max)}</td></tr>
+        <tr><th>OD</th><td>${esc(d.od)}</td><th>Weight/m</th><td>${esc(d.wt_m)}</td></tr>
       </table>
       <table class="prop-table">
-        <tr><th>MFR</th><th>ASH</th><th>الضغط</th><th>تراجع حراري</th><th>الكثافة</th><th>كلوريد الميثيل</th><th>Vi-cat</th><th>الصدمة</th></tr>
+        <tr><th>MFR</th><th>ASH</th><th>Pressure</th><th>Heat Reversion </th><th>Density</th><th>Methylene chloride</th><th>Vi-cat</th><th>Impact</th></tr>
         <tr><td>${escPE(d.mfr,d.material)}</td><td>${escPE(d.ash,d.material)}</td><td>${esc(d.hp_test)}</td><td>${esc(d.heat_rev)}</td><td>${esc(d.density)}</td><td>${escPVC(d.meth_chloride,d.material)}</td><td>${escPVC(d.vicat,d.material)}</td><td>${escPVC(d.impact,d.material)}</td></tr>
       </table>
-      ${d.pp_notes ? `<p class="notes">ملاحظات: ${esc(d.pp_notes)}</p>` : ''}
+      ${d.pp_notes ? `<p class="notes">Notes: ${esc(d.pp_notes)}</p>` : ''}
     </div>`;
   }).join('');
 
