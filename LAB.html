@@ -408,7 +408,7 @@ function populateFilters(){
   fillSelect('fMonth', [...new Set(monthScope.map(r=>r.date.slice(0,7)))].sort(), m=>{ const [y,mo]=m.split('-'); return (MONTHS_AR[parseInt(mo)]||mo) + ' ' + y; }, 'Months');
 
   const dayScope = scopedFor('dy');
-  fillSelect('fDay', [...new Set(dayScope.map(r=>parseInt(r.date.slice(8,10))))].filter(d=>!isNaN(d)).sort((a,b)=>a-b), v=>'يوم '+v, 'Days');
+  fillSelect('fDay', [...new Set(dayScope.map(r=>parseInt(r.date.slice(8,10))))].filter(d=>!isNaN(d)).sort((a,b)=>a-b), v=>'Day '+v, 'Days');
 
   const matScope = scopedFor('mat');
   fillSelect('fMaterial', [...new Set(matScope.map(r=>r.material))].filter(Boolean).sort(), v=>v, 'Materials');
@@ -627,7 +627,7 @@ function exportReport(){
     const yr = document.getElementById('fYear').value;
     const m = document.getElementById('fMonth').value;
     const dy = document.getElementById('fDay').value;
-    if(m!=='all'){ const [y,mo]=m.split('-'); return (MONTHS_AR[parseInt(mo)]||mo) + ' ' + y + (dy!=='all' ? ' — يوم '+dy : ''); }
+    if(m!=='all'){ const [y,mo]=m.split('-'); return (MONTHS_AR[parseInt(mo)]||mo) + ' ' + y + (dy!=='all' ? ' — Day '+dy : ''); }
     if(yr!=='all') return 'سنة ' + yr;
     return 'كل الفترة المتاحة';
   })();
