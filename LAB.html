@@ -252,7 +252,7 @@
           <th>Material B.N</th>
           <th>Order NO</th>
           <th class="col-size">Size</th>
-          <th>Result</th>
+          <th>النتيجة</th>
           <th>Th Min</th>
           <th>Th Max</th>
           <th>OD</th>
@@ -265,7 +265,7 @@
           <th>Methylene chloride</th>
           <th>Vi-cat</th>
           <th>Impact</th>
-          <th class="col-notes">Notes</th>
+          <th class="col-notes">Notes (PP)</th>
         </tr>
       </thead>
       <tbody id="testTableBody"></tbody>
@@ -287,7 +287,7 @@
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSQiYC7XUuYzsqOQkKtxFH667BvpK0sroldpVvGwJ-V4r0bfbA2-ar-ZlsBPyBLcMBDsi5EKFwWTmxC/pub?gid=1555908756&single=true&output=csv";
 const REFRESH_MS = 90000;   // تحديث تلقائي كل 90 ثانية
 
-const MONTHS_AR = {1:'JAN',2:'FEB',3:'MAR',4:'APR',5:'MAY',6:'JUNE',7:'JULY',8:'AUG',9:'SEP',10:'OCT',11:'NOV',12:'DEC'};
+const MONTHS_AR = {1:'يناير',2:'فبراير',3:'مارس',4:'أبريل',5:'مايو',6:'يونيو',7:'يوليو',8:'أغسطس',9:'سبتمبر',10:'أكتوبر',11:'نوفمبر',12:'ديسمبر'};
 const PASS_TARGET_PCT = 98; // الهدف المتفق عليه لنسبة النجاح
 
 let RAW = [];
@@ -297,7 +297,7 @@ if(window.ChartDataLabels){ Chart.register(ChartDataLabels); }
 
 async function loadData(manual){
   const statusEl = document.getElementById('statusText');
-  if(manual) statusEl.textContent = 'التحديث يتم الآن...';
+  if(manual) statusEl.textContent = 'بيتحدّث دلوقتي...';
 
   if(SHEET_CSV_URL){
     try{
@@ -308,13 +308,13 @@ async function loadData(manual){
       document.getElementById('setupBanner').style.display = 'none';
       statusEl.textContent = 'متصل — آخر تحديث ' + new Date().toLocaleTimeString('ar-EG');
     }catch(err){
-      console.error('فشل تحميل البيانات:', err);
-      statusEl.textContent = 'تعذّر الاتصال بالبيانات — بيعرض بيانات تجريبية';
+      console.error('فشل تحميل الشيت:', err);
+      statusEl.textContent = 'تعذّر الاتصال بالشيت — بيعرض بيانات تجريبية';
       if(RAW.length === 0) RAW = normalizeRows(DEMO_DATA, false);
     }
   }else{
     RAW = normalizeRows(DEMO_DATA, false);
-    statusEl.textContent = 'بيانات تجريبية — لسه مش متصل بالبيانات';
+    statusEl.textContent = 'بيانات تجريبية — لسه مش متصل بالشيت';
   }
 
   populateFilters();
@@ -408,7 +408,7 @@ function populateFilters(){
   fillSelect('fMonth', [...new Set(monthScope.map(r=>r.date.slice(0,7)))].sort(), m=>{ const [y,mo]=m.split('-'); return (MONTHS_AR[parseInt(mo)]||mo) + ' ' + y; }, 'Months');
 
   const dayScope = scopedFor('dy');
-  fillSelect('fDay', [...new Set(dayScope.map(r=>parseInt(r.date.slice(8,10))))].filter(d=>!isNaN(d)).sort((a,b)=>a-b), v=>'Day '+v, 'Days');
+  fillSelect('fDay', [...new Set(dayScope.map(r=>parseInt(r.date.slice(8,10))))].filter(d=>!isNaN(d)).sort((a,b)=>a-b), v=>'يوم '+v, 'Days');
 
   const matScope = scopedFor('mat');
   fillSelect('fMaterial', [...new Set(matScope.map(r=>r.material))].filter(Boolean).sort(), v=>v, 'Materials');
@@ -627,7 +627,7 @@ function exportReport(){
     const yr = document.getElementById('fYear').value;
     const m = document.getElementById('fMonth').value;
     const dy = document.getElementById('fDay').value;
-    if(m!=='all'){ const [y,mo]=m.split('-'); return (MONTHS_AR[parseInt(mo)]||mo) + ' ' + y + (dy!=='all' ? ' — Day '+dy : ''); }
+    if(m!=='all'){ const [y,mo]=m.split('-'); return (MONTHS_AR[parseInt(mo)]||mo) + ' ' + y + (dy!=='all' ? ' — يوم '+dy : ''); }
     if(yr!=='all') return 'سنة ' + yr;
     return 'كل الفترة المتاحة';
   })();
