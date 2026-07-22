@@ -233,6 +233,7 @@
     <select id="fShift"><option value="all">كل الشيفتات</option></select>
     <select id="fSize"><option value="all">كل المقاسات</option></select>
     <select id="fColor"><option value="all">كل الألوان</option></select>
+    <button class="refresh-btn" id="clearFiltersBtn" onclick="clearFilters()" style="display:none;">✕ مسح الفلاتر</button>
   </div>
 
   <div class="kpis">
@@ -404,7 +405,10 @@ function parseDate(str){
   if(m) return `${m[1]}-${pad2(m[2])}-${pad2(m[3])}`;
   m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
   if(m){
-    let [, mo, da, yr] = m;
+    let [, a, b, yr] = m;
+    let mo = parseInt(a), da = parseInt(b);
+    // لو أي رقم أكبر من 12 يبقى هو أكيد اليوم، مش الشهر (بيحل مشكلة صيغ التاريخ المختلفة بين الشيتات)
+    if(mo > 12 && da <= 12){ const t=mo; mo=da; da=t; }
     if(yr.length===2) yr = (parseInt(yr)>50 ? '19' : '20') + yr;
     return `${yr}-${pad2(mo)}-${pad2(da)}`;
   }
@@ -413,43 +417,62 @@ function parseDate(str){
 function pad2(n){ return String(n).padStart(2,'0'); }
 
 /* ---------- فلاتر ---------- */
-function populateFilters(){
-  const months = [...new Set(RAW.map(r=>r.date.slice(0,7)))].sort();
-  fillSelect('fMonth', months, m=>{
-    const [y,mo]=m.split('-'); return (MONTHS_AR[parseInt(mo)]||mo) + ' ' + y;
-  }, 'كل الشهور');
-  fillSelect('fProduct', [...new Set(RAW.map(r=>r.product_type))].filter(Boolean).sort(), v=>v, 'كل الأنواع');
-  fillSelect('fMachine', [...new Set(RAW.map(r=>r.machine))].filter(Boolean).sort(), v=>v, 'كل الماكينات');
-  fillSelect('fShift', [...new Set(RAW.map(r=>r.shift))].filter(Boolean).sort(), v=>'شيفت '+v, 'كل الشيفتات');
-  fillSelect('fSize', [...new Set(RAW.map(r=>r.product))].filter(Boolean).sort(), v=>v, 'كل المقاسات');
-  fillSelect('fColor', [...new Set(RAW.map(r=>r.color))].filter(Boolean).sort(), v=>v, 'كل الألوان');
+/* ---------- فلاتر ذكية (Smart Cascading Filters) ----------
+   كل فلتر بيعرض بس القيم اللي فعلاً موجودة بناءً على باقي الفلاتر
+   المفعّلة حاليًا، وبيوريك عدد الاختبارات جنب كل قيمة */
+const FILTER_DEFS = [
+  { id:'fMonth', field:r=>r.date.slice(0,7), allLabel:'كل الشهور',
+    labelFn:m=>{ const [y,mo]=m.split('-'); return (MONTHS_AR[parseInt(mo)]||mo) + ' ' + y; } },
+  { id:'fProduct', field:r=>r.product_type, allLabel:'كل الأنواع', labelFn:v=>v },
+  { id:'fMachine', field:r=>r.machine, allLabel:'كل الماكينات', labelFn:v=>v },
+  { id:'fShift', field:r=>r.shift, allLabel:'كل الشيفتات', labelFn:v=>'شيفت '+v },
+  { id:'fSize', field:r=>r.product, allLabel:'كل المقاسات', labelFn:v=>v },
+  { id:'fColor', field:r=>r.color, allLabel:'كل الألوان', labelFn:v=>v },
+];
+
+function activeFilters(excludeId){
+  return FILTER_DEFS.filter(f=>f.id!==excludeId).map(f=>({...f, value:document.getElementById(f.id).value}));
 }
-function fillSelect(id, values, labelFn, allLabel){
+function matchesActive(r, list){
+  return list.every(f=> f.value==='all' || String(f.field(r))===f.value);
+}
+
+function populateFilters(){
+  FILTER_DEFS.forEach(f=>{
+    const others = activeFilters(f.id);
+    const subset = RAW.filter(r=>matchesActive(r, others));
+    const counts = {};
+    subset.forEach(r=>{ const v=f.field(r); if(v) counts[v]=(counts[v]||0)+1; });
+    const values = Object.keys(counts).sort();
+    fillSelect(f.id, values, f.labelFn, f.allLabel, counts);
+  });
+  updateClearButton();
+}
+function fillSelect(id, values, labelFn, allLabel, counts={}){
   const sel = document.getElementById(id);
   const current = sel.value || 'all';
   sel.innerHTML = `<option value="all">${allLabel}</option>` +
-    values.map(v=>`<option value="${v}">${labelFn(v)}</option>`).join('');
+    values.map(v=>`<option value="${v}">${labelFn(v)}${counts[v]?' ('+counts[v]+')':''}</option>`).join('');
   if(values.includes(current)) sel.value = current;
 }
-['fMonth','fProduct','fMachine','fShift','fSize','fColor'].forEach(id=>{
-  document.addEventListener('change', e=>{ if(e.target.id===id) renderAll(); });
+function updateClearButton(){
+  const anyActive = FILTER_DEFS.some(f=>document.getElementById(f.id).value !== 'all');
+  document.getElementById('clearFiltersBtn').style.display = anyActive ? 'inline-block' : 'none';
+}
+function clearFilters(){
+  FILTER_DEFS.forEach(f=>{ document.getElementById(f.id).value = 'all'; });
+  populateFilters();
+  renderAll();
+}
+FILTER_DEFS.forEach(f=>{
+  document.addEventListener('change', e=>{
+    if(e.target.id===f.id){ populateFilters(); renderAll(); }
+  });
 });
 
 function getFiltered(){
-  const m = document.getElementById('fMonth').value;
-  const p = document.getElementById('fProduct').value;
-  const mc = document.getElementById('fMachine').value;
-  const sh = document.getElementById('fShift').value;
-  const sz = document.getElementById('fSize').value;
-  const cl = document.getElementById('fColor').value;
-  return RAW.filter(r=>
-    (m==='all' || r.date.slice(0,7)===m) &&
-    (p==='all' || r.product_type===p) &&
-    (mc==='all' || r.machine===mc) &&
-    (sh==='all' || r.shift===sh) &&
-    (sz==='all' || r.product===sz) &&
-    (cl==='all' || r.color===cl)
-  );
+  const active = activeFilters(null);
+  return RAW.filter(r=>matchesActive(r, active));
 }
 
 /* ---------- رسم كل حاجة ---------- */
